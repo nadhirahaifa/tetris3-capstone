@@ -1,0 +1,8 @@
+streamlit
+pandas
+numpy
+matplotlib
+folium
+plotly
+venn
+matplotlib_venn
