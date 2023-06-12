@@ -6,3 +6,4 @@ folium
 plotly
 venn
 matplotlib_venn
+streamlit-folium
