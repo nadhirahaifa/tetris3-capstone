@@ -1,13 +1,10 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import plotly.express as px
-import plotly.graph_objects as go
 import folium 
 from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
-from venn import venn
 from matplotlib_venn import venn3
 
 st.set_page_config(layout="wide")
@@ -15,7 +12,7 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 
 st.cache_data()
 
-df = pd.read_csv('output2.csv')
+df = pd.read_csv('../fixed_20230612-152704.csv')
 
 def load_map():
     map = folium.Map(location=[-2.945311, 119.579316], zoom_start=5)
@@ -52,7 +49,7 @@ def pr1():
     programming_language = programming_language.reset_index()
     programming_language.columns = ['programming_language', 'count']
 
-    return px.pie(programming_language, values='count', names='programming_language', title='is programming language required?')
+    return px.pie(programming_language, values='count', names='programming_language', title='is programming language required')
 
 def pr2():
     python = df[df['python'] == True]['id'].tolist()
@@ -107,21 +104,60 @@ def etl2():
     # Create the venn diagram
     return px.bar(x=data_bar['cols'], y=data_bar['len_cols'], title='ETL tools')
 
+def etl3():
+    etl = df[df['etl'] == True]['id'].tolist()
+    spark = df[df['spark'] == True]['id'].tolist()
+    kafka = df[df['kafka'] == True]['id'].tolist()
+    hive = df[df['hive'] == True]['id'].tolist()
+    snowflake = df[df['snowflake'] == True]['id'].tolist()
+    talend = df[df['talend'] == True]['id'].tolist()
+    dataiku = df[df['dataiku'] == True]['id'].tolist()
+    kinesis = df[df['kinesis'] == True]['id'].tolist()
+    pentaho = df[df['pentaho'] == True]['id'].tolist()
+
+    others = kafka + hive + snowflake + talend + dataiku + kinesis + pentaho
+
+    plt.figure(figsize=(3,3))
+    # Create the venn diagram
+    venn3([set(etl), set(spark), set(others)], ('etl', 'spark', 'others'))
+    return plt.show()
 
 def data_viz1():
-    cols = ['tableau', 'powerbi', 'matplotlib', 'seaborn', 'plotly',]
+    cols = ['dv', 'tableau', 'powerbi', 'matplotlib', 'seaborn', 'plotly']
+
+    # Check if any of the columns have true value
     is_true = df[cols].any(axis=1)
+
+    # Get the list of id
     ids = df[is_true]['id'].tolist()
 
     data_pie =  {'type': ['required', 'not_required'], 
                 'count': [len(ids), len(df)-len(ids)]
                 }
-    
     pie = pd.DataFrame(data_pie)
 
-    return px.pie(pie, values='count', names='type', title='Required Data Visualization')
+    # pie
+    return px.pie(pie, values='count', names='type', title='is data visualization required')
 
 def data_viz2():
+    cols = ['dv', 'tableau', 'powerbi', 'matplotlib', 'seaborn', 'plotly']
+    len_cols = []
+    for col in cols:
+        len_cols.append(len(df[df[col] == True]['id'].tolist()))
+
+    data_bar = {
+        'cols': ['visualisasi', 'tableau', 'powerbi', 'matplotlib', 'seaborn', 'plotly'],
+        'len_cols': len_cols
+    }
+
+    # sort the data by len_cols
+    data_bar = pd.DataFrame(data_bar)
+    data_bar = data_bar.sort_values(by='len_cols', ascending=False)
+
+    # Create the bar chart
+    return px.bar(x=data_bar['cols'], y=data_bar['len_cols'], title='Data Visualization tools')
+
+def data_viz3():
     tableau = df[df['tableau'] == True]['id'].tolist()
     powerbi = df[df['powerbi'] == True]['id'].tolist()
     matplotlib = df[df['matplotlib'] == True]['id'].tolist()
@@ -135,7 +171,6 @@ def data_viz2():
     # fig, ax = plt.subplots(nrows=1, ncols=1)
     plt.figure(figsize=(3,3))
     venn3([set(tableau), set(powerbi), set(others)], ('tableau', 'powerbi', 'others'))
-
 
     return plt.show()
 
@@ -181,7 +216,7 @@ def others_comm():
     communication.columns = ['type', 'count']
     # communication
 
-    return px.pie(communication, values='count', names='type', title="communication skills")
+    return px.pie(communication, values='count', names='type', title="Communication skills")
 
 def others_eng():
     eng = df['english'].value_counts()
@@ -207,120 +242,179 @@ def others_git():
 
     return px.pie(git, values='count', names='type', title="GIT")
 
-st.title('Title here')
+st.title('Scraping and Analyzing LinkedIn Job Data: A Study of Tools and Skills in the Data-Driven Professions in Indonesia')
 
 
 "### Maps of Distribution of Jobs in Indonesia"
 st_folium(load_map(), width=1200, height=500)
 
+
 "### Distribution of Jobs in Indonesia"
-st.plotly_chart(work_type())
+col1, col2 = st.columns(2)
+with col1:
+    st.plotly_chart(work_type())
+with col2:
+    st.markdown(r"""
+                <p style='text-align:justify; margin:25%' >
+                Lowongan pekerjaan pada bidang data per pada Mei 2023 mayoritas dengan tipe on-site (44.5) diikuti dengan remote (25%) dan hybrid 19.5%
+                </p>
+                """, unsafe_allow_html=True)
 
 "### Total Applicant"
-st.plotly_chart(total_applicant())
+col3, col4 = st.columns(2)
+with col3:
+    st.plotly_chart(total_applicant())
+with col4:
+    st.markdown(r"""
+                <p style='text-align:justify; margin:25%' >
+                Total pelamar pada bidang data per Mei 2023 mayoritas berjumlah 0-19 orang (41.5%) diikuti dengan 20-39 orang (20.5%) dan 40-59 orang (12.5%)
+                </p>
+                """, unsafe_allow_html=True)
 
 
 "### Programming Language"
-sec11, sec12, sec13 = st.columns(3)
-fig1, exp1= st.columns(2)
-fig2, exp2= st.columns(2)
-fig3, exp3= st.columns(2)
-
-with sec11:
-    with fig1:
+tab1, tab2, tab3 = st.tabs(["pie chart", "venn", "bar chart"])
+with tab1:
+    pict1, expl1 = st.columns(2)
+    with pict1:
         st.plotly_chart(pr1())
-    with exp1:
-        "penjelasan"
-with sec12:
-    with fig2:
+    with expl1:
+        st.markdown(r"""
+                    <p style='text-align:justify; margin:25%' >
+                    Lowongan pekerjaan pada bidang data per pada Mei 2023 mayoritas sebanyak 60% lowongan membutuhkan pelamar yang memiliki kemampuan pada bahasa pemrograman seperti pyhon, r, dan scala.
+                    </p>
+                    """, unsafe_allow_html=True)
+with tab2:
+    pict2, expl2 = st.columns(2)
+    with pict2:
         st.pyplot(pr2(), use_container_width=False)
-    with exp2:
-        "penjelasan"
-with sec13:
-    with fig3:
+    with expl2:
+        st.markdown(r"""
+                    <p style='text-align:justify; margin:25%'>
+                    Bahasa pemrograman yang paling banyak diminati/digunakan oleh perusahaan adalah python.<br>
+                    Jika dilihat pada diagram venn disamping, bahasa R dan scala hanya alternatif dari bahasa python, bahkan bahasa semua lowongan yang menyantumkan R menyantumkan juga python. Sehingga bahasa python merupakan pilihan bahasa terbaik dipelajari untuk seorang praktisi data.
+                    </p>
+                    """, unsafe_allow_html=True)
+with tab3:
+    pict3, expl3 = st.columns(2)
+    with pict3:
         st.plotly_chart(pr3())
-    with exp3:
-        "penjelasan"
-
+    with expl3:
+        st.markdown(r"""
+                    <p style='text-align:justify; margin:25%' >
+                    Bahasa pemrograman yang paling banyak diminati/digunakan oleh perusahaan adalah python yang disebutkan129 lowongan secara spesifik. Adapun bahasa R disebutkan 52 lowongan dan scala 21.
+                    </p>
+                    """, unsafe_allow_html=True)
+    
 "### ETL"
-sec21, sec22 = st.columns(2)
-fig4, exp4= st.columns(2)
-fig5, exp5= st.columns(2)
-
-with sec21:
-    with fig4:
+tab1, tab2, tab3 = st.tabs(["pie chart", "bar chart", "venn"])
+with tab1:
+    expl1, pict1 = st.columns(2)
+    with expl1:
+        st.markdown(r"""
+                    <p style='text-align:justify; margin:25%' >
+                    Meskipun ETL software disebutkan dibutuhkan pada lowongan sebanyak bahasa pemrograman, tetapi penguasaan ETL software tetap dibutuhkan oleh 37.3% perusahaan atau sebanyak 82 perusahaan.
+                    </p>
+                    """, unsafe_allow_html=True)
+    with pict1:
         st.plotly_chart(etl1())
-    with exp4:
-        "penjelasan"
-with sec22:
-    with fig5:
+with tab2:
+    expl2, pict2 = st.columns(2)
+    with expl2:
+        st.markdown(r"""
+                    <p style='text-align:justify; margin:25%' >
+                    ETL software yang dibutuhkan oleh perusahaan adalah paling banyak disebutkan adalah apache spark diikuti apache kafka dan hive. Namun apabila dilihat bahwa penyebutan ETL lebih banyak dibandingkan dengan penyebutan software ETL secara eksplisit.
+                    </p>
+                    """, unsafe_allow_html=True)
+    with pict2:
         st.plotly_chart(etl2())
-    with exp5:
-        "penjelasan"
+with tab3:
+    expl3, pict3 = st.columns(2)
+    with expl3:
+        st.markdown(r"""
+                    <p style='text-align:justify; margin:25%' >
+                    Berdasarkan diagram venn diatas, penyebutan ETL juga banyak dengan tidak memasukkan software yang digunakan secara spesifik sehingga penguasaan konsep mengenai software ETL lebih penting dibandingkan dengan penguasaan software tertentu.
+                    </p>
+                    """, unsafe_allow_html=True)
+    with pict3:
+        st.pyplot(etl3(), use_container_width=False)
 
 "### Data Visualization"
-sec31, sec32 = st.columns(2)
-fig6, exp6= st.columns(2)
-fig7, exp7= st.columns(2)
-
-with sec31:
-    with fig6:
+tab1, tab2, tab3 = st.tabs(["pie chart", "venn", "bar chart"])
+with tab1:
+    pict1, expl1 = st.columns(2)
+    with pict1:
         st.plotly_chart(data_viz1())
-    with exp6:
-        "penjelasan"
-with sec32:
-    with fig7:
-        st.pyplot(data_viz2(), use_container_width=False)
-    with exp7:
-        "penjelasan"
-
-
-
+    with expl1:
+        st.markdown(r"""
+                    <p style='text-align:justify; margin:25%' >
+                    Tentunya sebagai seorang praktisi data, data visualisasi merupakan suatu hal salah satu skill yang penting untuk dimiliki. Seperti yang dapat dilihat pada pie chart, sebanyak 60% menyebutkan software visualisasi maupun kata visualisasi itu sendiri.
+                    </p>
+                    """, unsafe_allow_html=True)
+with tab2:
+    pict2, expl2 = st.columns(2)
+    with pict2:
+        st.plotly_chart(data_viz2())
+    with expl2:
+        st.markdown(r"""
+                    <p style='text-align:justify; margin:25%' >
+                    Tools visualisasi yang paling sering disebutkan adalah tableau. Namun apabila dilihat bahwa jumlah perusahaan yang menyebutkan software visualisasi secara tidak spesifik pun tidak jauh berbeda. Sementara penyebutan matplotlib, seaborn dan plotly <10. Hal ini menunjukkan bahwa kemampuan untuk menggunakan software visualisasi lebih dibutuhkan praktisi data untuk memberikan informasi sehingga lebih mudah untuk berkolaborasi.
+                    </p>
+                    """, unsafe_allow_html=True)
+with tab3:
+    pict3, expl3 = st.columns(2)
+    with pict3:
+        st.pyplot(data_viz3(), use_container_width=False)
+    with expl3:
+        st.markdown(r"""
+                    <p style='text-align:justify; margin:25%' >
+                    Visualisasi data biasanya dapat dilakukan selama menguasai konsep dari visualisasi data itu sendiri, software biasanya merupakan sebuah alat pembantu untuk mempermudah dari visualisasi tersebut. Namun, Tableau masih memiliki keunggulan dibandingkan dengan powerBI dimana 57 lowongan menyebutkannya secara eksplisit.
+                    </p>
+                    """, unsafe_allow_html=True)
+        
 "### Databases"
-sec41, sec42 = st.columns(2)
-fig8, exp8= st.columns(2)
-fig9, exp9= st.columns(2)
-
-with sec41:
-    with fig8:
-        st.plotly_chart(db1())
-    with exp8:
-        "penjelasan"
-with sec42:
-    with fig9:
-        st.plotly_chart(db2())
-    with exp9:
-        "penjelasan"
-
+expl1, pict1 = st.columns(2)
+with expl1:
+    st.markdown(r"""
+                <p style='text-align:justify; margin:25%' >
+                Seorang praktisi data dibutuhkan untuk menguasai database yakni sebanyak 65.5% menyebutkannya secara eksplisit, lebih banyak dibandingkan yang perlu menguasai bahasa pemrograman yakni 60.5%
+                </p>
+                """, unsafe_allow_html=True)
+with pict1:
+    st.plotly_chart(db1())
 
 "### Others"
-sec51, sec52, sec53, sec54, sec55 = st.columns(5)
-fig10, exp10= st.columns(2)
-fig11, exp11= st.columns(2)
-fig12, exp12= st.columns(2)
-fig13, exp13= st.columns(2)
-
-with sec51:
-    with fig10:
+tab1, tab2, tab3 = st.tabs(["Communication", "English", "GIT"])
+# todo PPT
+with tab1:
+    pict1, expl1 = st.columns(2)
+    with pict1:
         st.plotly_chart(others_comm())
-    with exp10:
-        "penjelasan"
-with sec52:
-    with fig11:
+    with expl1:
+        st.markdown(r"""
+                    <p style='text-align:justify; margin:25%' >
+                    Pada bidang data, kemampuan komunikasi yang paling banyak dibutuhkan adalah kemampuan komunikasi verbal (75%) diikuti dengan kemampuan komunikasi non-verbal (25%)
+                    </p>
+                    """, unsafe_allow_html=True)
+with tab2:
+    pict2, expl2 = st.columns(2)
+    with pict2:
         st.plotly_chart(others_eng())
-    with exp11:
-        "penjelasan"
-with sec53:
-    with fig12:
-        st.plotly_chart(others_etl())
-    with exp12:
-        "penjelasan"
-with sec54:
-    with fig13:
+    with expl2:
+        st.markdown(r"""
+                    <p style='text-align:justify; margin:25%' >
+                    Kemampuan menguasai bahasa inggris merupakan salah satu kemampuan yang penting untuk dimiliki dimana hingga 64.5% lowongan membutuhkan pelamar yang memiliki kemampuan bahasa inggris. 
+                    Kemampuan bahasa inggris ini penting karena dibutuhkan untuk berkomunikasi dengan tim, stakeholder maupun pihak eksternal dengan latar belakang yang berbeda-beda.
+                    </p>
+                    """, unsafe_allow_html=True)
+with tab3:
+    pict3, expl3 = st.columns(2)
+    with pict3:
         st.plotly_chart(others_git())
-    with exp13:
-        "penjelasan"
-        
-
-
+    with expl3:
+        st.markdown(r"""
+                    <p style='text-align:justify; margin:25%' >
+                    Ternyata seorang praktisi data tidak dituntut untuk dapat menguasai git karena hanya 5.45% lowongan yang menyebutkan pelamar harus menguasai git.
+                    </p>
+                    """, unsafe_allow_html=True)
 
