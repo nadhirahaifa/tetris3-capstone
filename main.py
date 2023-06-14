@@ -12,7 +12,7 @@ st.set_option('deprecation.showPyplotGlobalUse', False)
 
 st.cache_data()
 
-df = pd.read_csv('../fixed_20230612-152704.csv')
+df = pd.read_csv('output2.csv')
 
 def load_map():
     map = folium.Map(location=[-2.945311, 119.579316], zoom_start=5)
