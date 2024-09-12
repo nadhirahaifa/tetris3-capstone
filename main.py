@@ -6,13 +6,15 @@ import folium
 from folium.plugins import MarkerCluster
 from streamlit_folium import st_folium
 from matplotlib_venn import venn3
+from pathlib import Path
 
 st.set_page_config(layout="wide")
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
 st.cache_data()
-
-df = pd.read_csv('output2.csv')
+# read dataset
+df_path = Path(__file__).parents[1] / 'output2.csv'
+df = pd.read_csv(df_path)
 
 def load_map():
     map = folium.Map(location=[-2.945311, 119.579316], zoom_start=5)
