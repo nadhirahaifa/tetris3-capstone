@@ -10,7 +10,6 @@ from pathlib import Path
 
 st.set_page_config(layout="wide")
 
-st.cache_data()
 # read dataset
 df_path = Path(__file__).parents[1] / 'output2.csv'
 df = pd.read_csv(df_path)
